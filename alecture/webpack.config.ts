@@ -1,102 +1,54 @@
-import path from 'path';
-import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
-import webpack, { Configuration as WebpackConfiguration } from "webpack";
-import { Configuration as WebpackDevServerConfiguration } from "webpack-dev-server";
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-
-interface Configuration extends WebpackConfiguration {
-  devServer?: WebpackDevServerConfiguration;
-}
-
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const TerserPlugin = require('terser-webpack-plugin');
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const config: Configuration = {
-  name: 'sleact',
-  mode: isDevelopment ? 'development' : 'production',
-  devtool: !isDevelopment ? 'hidden-source-map' : 'eval',
-  resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
-    alias: {
-      '@hooks': path.resolve(__dirname, 'hooks'),
-      '@components': path.resolve(__dirname, 'components'),
-      '@layouts': path.resolve(__dirname, 'layouts'),
-      '@pages': path.resolve(__dirname, 'pages'),
-      '@utils': path.resolve(__dirname, 'utils'),
-      '@typings': path.resolve(__dirname, 'typings'),
-    },
-  },
-  entry: {
-    app: './client',
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        loader: 'babel-loader',
-        options: {
-          presets: [
-            [
-              '@babel/preset-env',
-              {
-                targets: { browsers: ['IE 10'] },
-                debug: isDevelopment,
-              },
-            ],
-            '@babel/preset-react',
-            '@babel/preset-typescript',
-          ],
-          env: {
-            development: {
-              plugins: [require.resolve('react-refresh/babel')],
-            },
-          },
-        },
-        exclude: path.join(__dirname, 'node_modules'),
-      },
-      {
-        test: /\.css?$/,
-        use: ['style-loader', 'css-loader'],
-      },
-    ],
-  },
-  plugins: [
-    new ForkTsCheckerWebpackPlugin({
-      async: false,
-      // eslint: {
-      //   files: "./src/**/*",
-      // },
-    }),
-    new webpack.EnvironmentPlugin({ NODE_ENV: isDevelopment ? 'development' : 'production' }),
-  ],
-  output: {
-    path: path.join(__dirname, 'dist'),
-    filename: '[name].js',
-    publicPath: '/dist/',
-  },
-  devServer: {
-    historyApiFallback: true, // react router
-    port: 3090,
-    devMiddleware: { publicPath: '/dist/' },
-    static: { directory: path.resolve(__dirname) },
-    proxy: {
-      '/api/': {
-        target: 'http://localhost:3095',
-        changeOrigin: true,
-      },
-    },
-  },
+// entry 에 module 적용하고, 추가적으로 plugins 적용해서 output 으로 결과를 내 보낸다.
+module.exports = {
+	name: 'sleact',
+	mode: isDevelopment ? 'development' : 'production', // 개발시 none 또는 development 운영시 production, e-hrd 개발: development, 운영:production
+	stats: {
+		colors: true,
+	},
+
+	devtool: !isDevelopment ? 'hidden-source-map' : 'source-map', // 개발시 eval 또는 eval-source-map 운영시 source-map 또는 hidden-source-map 사용 e-hrd 개발: source-map, 운영:hidden-source-map
+	resolve: {
+		// 모듈을 해석할 때 검색할 디렉터리를 webpack에 알려줍니다.
+		// 기본적으로 node_modules 이다. node_modules 만 있을때는 생략 가능!!
+		//modules: [path.resolve(__dirname, 'myTypes'), 'node_modules'],
+		// 확장자를 배열로 넣어둠
+		extensions: ['.ts', '.tsx'],
+	},
+
+	entry: {
+		app: ['./client.tsx'],
+		//	resourceCost: ['./src/main/webapp/resources/ts/webPage/resourceCost/resourceCostList.ts'],
+		//	company: ['./src/main/webapp/resources/ts/webPage/company/companyList.ts'],
+		//	building: ['./src/main/webapp/resources/ts/webPage/building/buildingList.ts'],
+		//  ... 나머지는 생략 추후에 필요시 추가 하면 됨.
+	},
+	module: {
+		// entry -> output 으로 변환 할때 중간에 개입하는 것이 module 임.
+		rules: [
+			{
+				test: /\.tsx$/,
+				use: 'ts-loader',
+				exclude: /(node_modules|@myTypes)/,
+			},
+			{
+				test: /\.css?$/,
+				use: ['style-loader', 'css-loader'],
+			},
+		],
+	},
+	plugins: [],
+	output: {
+		// build 결과물 정의
+		path: path.resolve(__dirname, './dist'),
+		//filename: 'main.bundle.js',
+		filename: '[name].js',
+	},
 };
-
-if (isDevelopment && config.plugins) {
-  config.plugins.push(new webpack.HotModuleReplacementPlugin());
-  config.plugins.push(new ReactRefreshWebpackPlugin());
-  config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: true }));
-}
-if (!isDevelopment && config.plugins) {
-  config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: true }));
-  config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'static' }));
-}
-
-export default config;

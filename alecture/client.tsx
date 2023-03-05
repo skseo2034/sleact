@@ -1,15 +1,7 @@
-import React from 'react';
-import { render } from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
-import App from '@layouts/App';
+import * as React from 'react';
+import App from './layouts/App';
+import { createRoot } from 'react-dom/client';
 
-render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
-  document.querySelector('#app'),
-);
-
-// pages - 서비스 페이지
-// components - 짜잘 컴포넌트
-// layouts - 공통 레이아웃
+const container = document.getElementById('app') as HTMLDivElement;
+const root = createRoot(container);
+root.render(<App />);
