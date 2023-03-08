@@ -47,7 +47,7 @@ MYSQL_PASSWORD=디비비번
   - 언어 문법과 자바스크립트 결과물이 어떻게 나와야하는지 설정하는 파일
   - lib은 ES2020, DOM(브라우저), module은 esnext처럼 최신 설정이지만 target은 es5로 IE 브라우저에서도 돌아갈 수 있게 변환
   - strict: true를 켜놓아야 타입 체킹을 해줘서 의미가 있음.
-5. webpack.config.ts
+5. webpack.config 파일 설정
   - 웹팩 설정
   - ts, css, json, 최신 문법 js 파일들을 하나로 합쳐줌.
   - npm i -D webpack @types/webpack @types/node

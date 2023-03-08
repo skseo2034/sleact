@@ -1,7 +1,20 @@
-import * as React from 'react';
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import loadable from '@loadable/component';
+
+const SignUp = loadable(() => import('@pages/SignUp/SignUp'));
+const Login = loadable(() => import('@pages/Login/Login'));
 
 const App = () => {
-	return <div>좀만 참아주세요~ㅠㅠㅠ</div>;
+	return (
+		<BrowserRouter>
+			<Routes>
+				<Route path="/" element={<Navigate replace to="/login" />} />
+				<Route path="/login" element={<Login />} />
+				<Route path="/signup" element={<SignUp />} />
+			</Routes>
+		</BrowserRouter>
+	);
 };
 
 export default App;
