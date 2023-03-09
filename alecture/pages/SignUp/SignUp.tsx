@@ -9,27 +9,42 @@ const SingUp = () => {
 	const [passwordCheck, setPasswordCheck] = useState('');
 	const [mismatchError, setMismatchError] = useState(false);
 	const [signUpError, setSignUpError] = useState(false);
-	const [signUpSuccess, setSignUpSuccess] = useState(true);
+	const [signUpSuccess, setSignUpSuccess] = useState(false);
 
-	const onSubmit = () => {
-		//
-	};
+	const onSubmit = useCallback(
+		(e: React.FormEvent<HTMLFormElement>) => {
+			e.preventDefault();
 
-	const onChangeEmail = useCallback((e: any) => {
+			if (!mismatchError) {
+				console.log('서버로 회원가입하기');
+			}
+		},
+		[email, nickname, password, passwordCheck]
+	);
+
+	const onChangeEmail = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setEmail(e.target.value);
 	}, []);
 
-	const onChangeNickname = useCallback((e: any) => {
+	const onChangeNickname = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setNickname(e.target.value);
 	}, []);
 
-	const onChangePassword = useCallback((e: any) => {
-		setPassword(e.target.value);
-	}, []);
+	const onChangePassword = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			setPassword(e.target.value);
+			setMismatchError(e.target.value !== passwordCheck);
+		},
+		[passwordCheck]
+	);
 
-	const onChangePasswordCheck = useCallback((e: any) => {
-		setPasswordCheck(e.target.value);
-	}, []);
+	const onChangePasswordCheck = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			setPasswordCheck(e.target.value);
+			setMismatchError(e.target.value !== password);
+		},
+		[password]
+	);
 
 	return (
 		<div id="container">
