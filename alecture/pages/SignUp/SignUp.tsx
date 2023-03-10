@@ -1,10 +1,13 @@
-import React, { useCallback, useState } from 'react';
+import React, { ChangeEventHandler, useCallback, useState } from 'react';
 import { Header, Form, Label, Input, Button, Error, Success, LinkContainer } from './signUpStyle';
 import { Link } from 'react-router-dom';
+import useInput from '@hooks/useInput';
 
 const SingUp = () => {
-	const [email, setEmail] = useState('');
-	const [nickname, setNickname] = useState('');
+	// const [email, setEmail] = useState('');
+	const [email, onChangeEmail, setEmail] = useInput('');
+	// const [nickname, setNickname] = useState('');
+	const [nickname, onChangeNickname, setNickname] = useInput('');
 	const [password, setPassword] = useState('');
 	const [passwordCheck, setPasswordCheck] = useState('');
 	const [mismatchError, setMismatchError] = useState(false);
@@ -21,14 +24,6 @@ const SingUp = () => {
 		},
 		[email, nickname, password, passwordCheck]
 	);
-
-	const onChangeEmail = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setEmail(e.target.value);
-	}, []);
-
-	const onChangeNickname = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-		setNickname(e.target.value);
-	}, []);
 
 	const onChangePassword = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,13 +48,25 @@ const SingUp = () => {
 				<Label id="email-label">
 					<span>이메일 주소</span>
 					<div>
-						<Input type="email" id="email" name="email" value={email} onChange={onChangeEmail} />
+						<Input
+							type="email"
+							id="email"
+							name="email"
+							value={email as string}
+							onChange={onChangeEmail as ChangeEventHandler<HTMLInputElement>}
+						/>
 					</div>
 				</Label>
 				<Label id="nickname-label">
 					<span>닉네임</span>
 					<div>
-						<Input type="text" id="nickname" name="nickname" value={nickname} onChange={onChangeNickname} />
+						<Input
+							type="text"
+							id="nickname"
+							name="nickname"
+							value={nickname as string}
+							onChange={onChangeNickname as ChangeEventHandler<HTMLInputElement>}
+						/>
 					</div>
 				</Label>
 				<Label id="password-label">
