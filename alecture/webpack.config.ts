@@ -3,13 +3,28 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import webpack, { Configuration as WebpackConfiguration } from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+/*const Dotenv = require('dotenv-webpack');*/
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const dotenv = require('dotenv');
+// dotenv.config();
+
+const DEV = process.env.DEV;
+console.log(DEV);
+dotenv.config({
+	path: DEV ? './env/local.env' : './env/real.env',
+});
+
 interface Configuration extends WebpackConfiguration {
 	devServer?: WebpackDevServerConfiguration;
 }
 
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
+// console.log(process.env.NODE_ENV);
 
 const config: Configuration = {
 	name: 'sleact',
@@ -39,7 +54,7 @@ const config: Configuration = {
 						[
 							'@babel/preset-env',
 							{
-								targets: { browsers: ['IE 10'] },
+								targets: { browsers: ['last 2 chrome versions'] },
 								debug: isDevelopment,
 							},
 						],
@@ -71,6 +86,10 @@ const config: Configuration = {
 			// },
 		}),
 		new webpack.EnvironmentPlugin({ NODE_ENV: isDevelopment ? 'development' : 'production' }),
+		new webpack.DefinePlugin({
+			'process.env': JSON.stringify(process.env),
+		}),
+		/*new Dotenv(),*/
 	],
 	output: {
 		path: path.join(__dirname, 'dist'),
@@ -82,14 +101,23 @@ const config: Configuration = {
 		port: 3090,
 		devMiddleware: { publicPath: '/dist/' },
 		static: { directory: path.resolve(__dirname) },
+		proxy: {
+			'/api/': {
+				target: 'http://localhost:3095',
+				changeOrigin: true,
+			},
+		},
 	},
 };
 
 if (isDevelopment && config.plugins) {
 	config.plugins.push(new webpack.HotModuleReplacementPlugin());
 	config.plugins.push(new ReactRefreshWebpackPlugin());
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: false }));
 }
 if (!isDevelopment && config.plugins) {
+	config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: true }));
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'static' }));
 }
 
 export default config;

@@ -1,20 +1,15 @@
-import * as path from 'path';
+import path from 'path';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
-import webpack, { Configuration as WebpackConfiguration } from 'webpack';
-import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
-
-interface Configuration extends WebpackConfiguration {
-	devServer?: WebpackDevServerConfiguration;
-}
-
+import webpack from 'webpack';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-const config: Configuration = {
+const config: webpack.Configuration = {
 	name: 'sleact',
 	mode: isDevelopment ? 'development' : 'production',
-	devtool: !isDevelopment ? 'hidden-source-map' : 'eval',
+	devtool: isDevelopment ? 'hidden-source-map' : 'inline-source-map',
 	resolve: {
 		extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
 		alias: {
@@ -39,7 +34,7 @@ const config: Configuration = {
 						[
 							'@babel/preset-env',
 							{
-								targets: { browsers: ['IE 10'] },
+								targets: { browsers: ['last 2 chrome versions'] },
 								debug: isDevelopment,
 							},
 						],
@@ -48,7 +43,10 @@ const config: Configuration = {
 					],
 					env: {
 						development: {
-							plugins: [require.resolve('react-refresh/babel')],
+							plugins: [['emotion', { sourceMap: true }], require.resolve('react-refresh/babel')],
+						},
+						production: {
+							plugins: ['emotion'],
 						},
 					},
 				},
@@ -75,19 +73,26 @@ const config: Configuration = {
 		publicPath: '/dist/',
 	},
 	devServer: {
-		historyApiFallback: true, // react router
+		historyApiFallback: true,
 		port: 3090,
-		devMiddleware: { publicPath: '/dist/' },
-		static: { directory: path.resolve(__dirname) },
+		publicPath: '/dist/',
+		proxy: {
+			'/api/': {
+				target: 'http://localhost:3095',
+				changeOrigin: true,
+			},
+		},
 	},
 };
 
 if (isDevelopment && config.plugins) {
 	config.plugins.push(new webpack.HotModuleReplacementPlugin());
 	config.plugins.push(new ReactRefreshWebpackPlugin());
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: false }));
 }
 if (!isDevelopment && config.plugins) {
-	//...
+	config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: true }));
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'static' }));
 }
 
 export default config;

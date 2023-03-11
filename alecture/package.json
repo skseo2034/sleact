@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack serve --env development",
-    "dev1": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack serve --env development",
+    "dev": "cross-env DEV=ture webpack serve --env development",
+    "dev1": "webpack serve --env development",
+    "dev2": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack serve --env development",
     "dev-build": "cross-env NODE_ENV=development webpack",
     "pro-build": "cross-env NODE_ENV=production webpack"
   },
@@ -29,6 +30,7 @@
     "core-js": "^3.29.0",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.7",
+    "dotenv": "^16.0.3",
     "gravatar": "^1.8.2",
     "react": "^18.2.0",
     "react-custom-scrollbars-2": "^4.5.0",
@@ -61,6 +63,7 @@
     "babel-loader": "^9.1.2",
     "css-loader": "^6.7.3",
     "css-minimizer-webpack-plugin": "^4.2.2",
+    "dotenv-webpack": "^8.0.1",
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-prettier": "^4.2.1",

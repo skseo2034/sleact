@@ -2,6 +2,7 @@ import React, { ChangeEventHandler, useCallback, useState } from 'react';
 import { Header, Form, Label, Input, Button, Error, Success, LinkContainer } from './signUpStyle';
 import { Link } from 'react-router-dom';
 import useInput from '@hooks/useInput';
+import axios from 'axios';
 
 const SingUp = () => {
 	// const [email, setEmail] = useState('');
@@ -11,15 +12,41 @@ const SingUp = () => {
 	const [password, setPassword] = useState('');
 	const [passwordCheck, setPasswordCheck] = useState('');
 	const [mismatchError, setMismatchError] = useState(false);
-	const [signUpError, setSignUpError] = useState(false);
+	const [signUpError, setSignUpError] = useState('');
 	const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+	// console.log(process.env.DEV);
+	const API_URL = process.env.REACT_APP_API_URL;
+	const PORT = process.env.REACT_APP_PORT; // 3095
+	// console.log(API_URL);
+	// const regMemUrl = `${API_URL}:${PORT}/api/users`; // 로컬호스트 3090이 3095에게 보내는 요청.
+	const regMemUrl = '/api/users'; // 로컬호스트 3095가 3095에게 보내는 요청.
 	const onSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
 
 			if (!mismatchError) {
 				console.log('서버로 회원가입하기');
+
+				// 비동기 요청전 요청으로 set 되는 값들은 초기화 하는게 좋다.
+				// 여러 요청으로 인해 이전값이 저장 되어 있을수 있다.
+				setSignUpSuccess(false);
+				setSignUpError('');
+
+				axios
+					.post(regMemUrl, {
+						email,
+						nickname,
+						password,
+					})
+					.then(response => {
+						console.log(response);
+						setSignUpSuccess(true);
+					})
+					.catch(error => {
+						setSignUpError(error.response.data);
+					})
+					.finally(() => {});
 			}
 		},
 		[email, nickname, password, passwordCheck]
@@ -29,6 +56,7 @@ const SingUp = () => {
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			setPassword(e.target.value);
 			setMismatchError(e.target.value !== passwordCheck);
+			console.log(mismatchError);
 		},
 		[passwordCheck]
 	);
@@ -37,6 +65,7 @@ const SingUp = () => {
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			setPasswordCheck(e.target.value);
 			setMismatchError(e.target.value !== password);
+			console.log(mismatchError);
 		},
 		[password]
 	);
