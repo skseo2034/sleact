@@ -33,6 +33,7 @@ if (prod) {
   app.use(hpp());
 } else {
   app.use(morgan("dev"));
+  // back 단에서 cros 해제 하는것 요청시 http://localhost:3095 붙여야 함.(ex. http://localhost:3095/api/users/login)
   app.use(
     cors({
       origin: true,

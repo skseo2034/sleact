@@ -102,6 +102,7 @@ const config: Configuration = {
 		devMiddleware: { publicPath: '/dist/' },
 		static: { directory: path.resolve(__dirname) },
 		proxy: {
+			// front 단에서 cros 해제 하는것 요청시 http://localhost:3095 제외한 url 호출 (ex. /api/users/login)
 			'/api/': {
 				target: 'http://localhost:3095',
 				changeOrigin: true,

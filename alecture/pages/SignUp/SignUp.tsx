@@ -19,8 +19,8 @@ const SingUp = () => {
 	const API_URL = process.env.REACT_APP_API_URL;
 	const PORT = process.env.REACT_APP_PORT; // 3095
 	// console.log(API_URL);
-	// const regMemUrl = `${API_URL}:${PORT}/api/users`; // 로컬호스트 3090이 3095에게 보내는 요청.
-	const regMemUrl = '/api/users'; // 로컬호스트 3095가 3095에게 보내는 요청.
+	// const reqSignUrl = `${API_URL}:${PORT}/api/users`; // 로컬호스트 3090이 3095에게 보내는 요청.
+	const reqSignUrl = '/api/users'; // 로컬호스트 3095가 3095에게 보내는 요청.
 	const onSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
@@ -34,7 +34,7 @@ const SingUp = () => {
 				setSignUpError('');
 
 				axios
-					.post(regMemUrl, {
+					.post(reqSignUrl, {
 						email,
 						nickname,
 						password,
