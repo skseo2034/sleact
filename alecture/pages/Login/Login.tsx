@@ -3,6 +3,8 @@ import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { Button, Form, Header, Input, Label, LinkContainer, Error } from '@pages/SignUp/signUpStyle';
 import useInput from '@hooks/useInput';
 import axios from 'axios';
+import useSWR from 'swr';
+import fetcher from '@utils/fetcher';
 
 const Login = () => {
 	const [email, onChangeEmail, setEmail] = useInput('');
@@ -10,10 +12,12 @@ const Login = () => {
 	const [logInError, setLogInError] = useState(false);
 	const navigate = useNavigate();
 
-	// const API_URL = process.env.REACT_APP_API_URL;
-	// const PORT = process.env.REACT_APP_PORT; // 3095
+	const API_URL = process.env.REACT_APP_API_URL;
+	const PORT = process.env.REACT_APP_PORT; // 3095
 	// const reqLogInUrl = `${API_URL}:${PORT}/api/users/login`;
 	const reqLogInUrl = '/api/users/login';
+	const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	const { data, error } = useSWR(reqUserInfoUrl, fetcher);
 
 	const onChangePassword = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setpassword(e.target.value);
@@ -24,16 +28,16 @@ const Login = () => {
 			e.preventDefault();
 
 			axios
-				.post(reqLogInUrl, { email, password })
+				.post(reqLogInUrl, { email, password }, { withCredentials: true })
 				.then(res => {
 					console.log('로그인 성공');
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
-					navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
+					// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
 					//	navigate('/channel');
 				})
-				.catch(() => {
-					setLogInError(true);
+				.catch(error => {
+					setLogInError(error.response?.data?.statusCode === 401);
 				})
 				.finally(() => {
 					//...
