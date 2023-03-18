@@ -1,10 +1,24 @@
-import React, { ChangeEventHandler, useCallback, useState } from 'react';
+import React, { ChangeEventHandler, useCallback, useEffect, useState } from 'react';
 import { Header, Form, Label, Input, Button, Error, Success, LinkContainer } from './signUpStyle';
-import { Link } from 'react-router-dom';
-import useInput from '@hooks/useInput';
+import { Link, useNavigate } from 'react-router-dom';
+
 import axios from 'axios';
+import useSWR from 'swr';
+import useInput from "../../hooks/useInput";
+import {fetcher} from "../../utils/fetcher";
+
 
 const SingUp = () => {
+	const navigate = useNavigate();
+	const API_URL = process.env.REACT_APP_API_URL;
+	const PORT = process.env.REACT_APP_PORT; // 3095
+	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	const reqUserInfoUrl = '/api/users';
+	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
+		// data 나 error 이 바뀌면 리랜더링 된다.
+		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
+	});
+	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
 	// const [email, setEmail] = useState('');
 	const [email, onChangeEmail, setEmail] = useInput('');
 	// const [nickname, setNickname] = useState('');
@@ -15,10 +29,6 @@ const SingUp = () => {
 	const [signUpError, setSignUpError] = useState('');
 	const [signUpSuccess, setSignUpSuccess] = useState(false);
 
-	// console.log(process.env.DEV);
-	const API_URL = process.env.REACT_APP_API_URL;
-	const PORT = process.env.REACT_APP_PORT; // 3095
-	// console.log(API_URL);
 	// const reqSignUrl = `${API_URL}:${PORT}/api/users`; // 로컬호스트 3090이 3095에게 보내는 요청.
 	const reqSignUrl = '/api/users'; // 로컬호스트 3095가 3095에게 보내는 요청.
 	const onSubmit = useCallback(
@@ -69,6 +79,21 @@ const SingUp = () => {
 		},
 		[password]
 	);
+
+	console.log('data1111 >>> ', data);
+
+	useEffect(() => {
+		console.log('sing up use effect1 >>>>> ', data);
+		// useEffect 처리 하지 않으면 warning 발생 함.
+		if (data) {
+			// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
+			navigate('/workspace/channel');
+		}
+	}, [data]);
+
+	/*if (!data) {
+		return <div>Loading....</div>
+	}*/
 
 	return (
 		<div id="container">

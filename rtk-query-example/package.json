@@ -1,0 +1,35 @@
+{
+  "name": "rtk-query-example",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "main": "src/index.js",
+  "dependencies": {
+    "@reduxjs/toolkit": "1.9.1",
+    "@testing-library/jest-dom": "4.1.0",
+    "@testing-library/react": "9.2.0",
+    "msw": "0.27.1",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "react-redux": "8.0.5",
+    "react-scripts": "3.1.2"
+  },
+  "devDependencies": {
+    "typescript": "3.8.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "msw": {
+    "workerDirectory": "public"
+  }
+}

@@ -1,0 +1,59 @@
+import React, { FC, useCallback, useEffect } from 'react';
+import useSWR from 'swr';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import {fetcher} from "../utils/fetcher";
+
+type Props = {
+	children?: React.ReactNode;
+};
+
+const Workspace: FC<Props> = ({ children }) => {
+	const navigate = useNavigate();
+	const API_URL = process.env.REACT_APP_API_URL;
+	const PORT = process.env.REACT_APP_PORT; // 3095
+	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	const reqUserInfoUrl = '/api/users';
+	const reqLogoutUrl = `${API_URL}:${PORT}/api/users/logout`;
+
+	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
+		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
+	});
+	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
+
+	const onLogout = useCallback(() => {
+		axios
+			.post(reqLogoutUrl, null, {
+				withCredentials: true, // 쿠키를 항상 공유하기 위해서 true 로 함.
+			})
+			.then(async res => {
+				console.log('Workspace res >>>>> ', res);
+				await mutate(res.data, true);
+			})
+			.catch(error => {
+				console.log('에러발생 >>>> ', error.response);
+			});
+	}, []);
+
+	console.log('Workspace data1 >>>>> ', data);
+
+	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		if (data == 'ok' || !data) {
+			console.log('login 으로 이동', data == 'ok');
+			navigate('/login');
+		}
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+	}, [data]);
+
+	return (
+		<div>
+			<button onClick={onLogout}>로그아웃</button>
+			{children}
+		</div>
+	);
+};
+
+export default Workspace;

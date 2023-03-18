@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
-import { Button, Form, Header, Input, Label, LinkContainer, Error } from '@pages/SignUp/signUpStyle';
-import useInput from '@hooks/useInput';
-import axios from 'axios';
+import { Button, Form, Header, Input, Label, LinkContainer, Error } from '../SignUp/signUpStyle';
+import axios, { AxiosResponse } from 'axios';
 import useSWR from 'swr';
-import fetcher from '@utils/fetcher';
+import useInput from "../../hooks/useInput";
+import {fetcher} from "../../utils/fetcher";
 
 const Login = () => {
 	const [email, onChangeEmail, setEmail] = useInput('');
@@ -15,9 +15,14 @@ const Login = () => {
 	const API_URL = process.env.REACT_APP_API_URL;
 	const PORT = process.env.REACT_APP_PORT; // 3095
 	// const reqLogInUrl = `${API_URL}:${PORT}/api/users/login`;
+	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
 	const reqLogInUrl = '/api/users/login';
-	const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
-	const { data, error } = useSWR(reqUserInfoUrl, fetcher);
+	const reqUserInfoUrl = '/api/users';
+	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
+		// data 나 error 이 바뀌면 리랜더링 된다.
+		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
+	});
+	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
 
 	const onChangePassword = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setpassword(e.target.value);
@@ -26,11 +31,13 @@ const Login = () => {
 	const onSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
-
+			setLogInError(false);
 			axios
 				.post(reqLogInUrl, { email, password }, { withCredentials: true })
-				.then(res => {
-					console.log('로그인 성공');
+				.then(async res => {
+					console.log('로그인 성공', data);
+				//	navigate('/workspace/channel');
+					await mutate(res.data, true);
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
@@ -45,6 +52,18 @@ const Login = () => {
 		},
 		[email, password]
 	);
+
+	console.log('Login data >>>>> ', data);
+
+	useEffect(() => {
+		console.log('Login useEffect change data >>>>> ', data);
+		// useEffect 처리 하지 않으면 warning 발생 함.
+		if (data) {
+			console.log('채널페이지로 이동');
+			// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
+			navigate('/workspace/channel');
+		}
+	}, [data]);
 
 	return (
 		<div id="container">

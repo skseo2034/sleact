@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import loadable from '@loadable/component';
-import Channel from '@pages/Channel/Channel';
 
-const SignUp = loadable(() => import('@pages/SignUp/SignUp'));
-const Login = loadable(() => import('@pages/Login/Login'));
+const SignUp = loadable(() => import('../pages/SignUp/SignUp'), {
+	fallback: <h1>Loading SignUp</h1>,
+});
+const Login = loadable(() => import('../pages/Login/Login'));
+const Channel = loadable(() => import('../pages/Channel/Channel'));
 
 const App = () => {
 	return (
@@ -14,7 +16,7 @@ const App = () => {
 				<Route path="/login" element={<Login />} />
 				<Route path="/signup" element={<SignUp />} />
 				{/*<Route path="/channel/:email" element={<Channel />} />*/}
-				<Route path="/channel" element={<Channel />} />
+				<Route path="/workspace/channel" element={<Channel />} />
 			</Routes>
 		</BrowserRouter>
 	);
