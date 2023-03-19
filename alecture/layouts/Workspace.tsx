@@ -17,9 +17,12 @@ const Workspace: FC<Props> = ({ children }) => {
 	const reqLogoutUrl = `${API_URL}:${PORT}/api/users/logout`;
 
 	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
-		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
+		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
 	});
 	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
+
+	const { data: localType } = useSWR('localType');
+	console.log('localType', localType);
 
 	const onLogout = useCallback(() => {
 		axios
@@ -28,7 +31,8 @@ const Workspace: FC<Props> = ({ children }) => {
 			})
 			.then(async res => {
 				console.log('Workspace res >>>>> ', res);
-				await mutate(res.data, true);
+				//await mutate(res.data, true);
+				await mutate(false, false); // false 서버에 요청 보내지 않고 로컬데이터를 수정. 보내할 사항이면 true 사용해야 함.
 			})
 			.catch(error => {
 				console.log('에러발생 >>>> ', error.response);

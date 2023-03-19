@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { Button, Form, Header, Input, Label, LinkContainer, Error } from '../SignUp/signUpStyle';
 import axios, { AxiosResponse } from 'axios';
+// import useSWR, {mutate} from 'swr';
 import useSWR from 'swr';
 import useInput from "../../hooks/useInput";
 import {fetcher} from "../../utils/fetcher";
@@ -18,7 +19,7 @@ const Login = () => {
 	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
 	const reqLogInUrl = '/api/users/login';
 	const reqUserInfoUrl = '/api/users';
-	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
+	const { data, error, mutate} = useSWR(reqUserInfoUrl, fetcher, {
 		// data 나 error 이 바뀌면 리랜더링 된다.
 		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
 	});
@@ -27,6 +28,8 @@ const Login = () => {
 	const onChangePassword = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
 		setpassword(e.target.value);
 	}, []);
+
+	const { data: localType } = useSWR('localType', (key) => { return 'ko_KR'});
 
 	const onSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
@@ -37,7 +40,9 @@ const Login = () => {
 				.then(async res => {
 					console.log('로그인 성공', data);
 				//	navigate('/workspace/channel');
-					await mutate(res.data, true);
+					// await mutate(reqUserInfoUrl, res.data, false); // swr 에 mutate 사용시, true 서버로 요청 보내서 다시가지고 옴, false 서버요청 다시 안보냄
+					await mutate(res.data,  false); // useSWR 에 mutate 사용시, true 서버로 요청 보내서 다시가지고 옴, false 서버요청 다시 안보냄
+					// 서버에 요청을 보내야 할 상황이면 true 를 해야함. false 는 로컬만 변경한다.
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
