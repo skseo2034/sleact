@@ -1,8 +1,21 @@
 import React, { FC, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import {fetcher} from "../utils/fetcher";
+import {BrowserRouter, Navigate, Route, Routes, useNavigate} from 'react-router-dom';
+import {fetcher} from "@utils/fetcher";
+import {
+	Channels,
+	Chats,
+	Header, MenuScroll,
+	ProfileImg,
+	RightMenu, WorkspaceName,
+	Workspaces,
+	WorkspaceWrapper
+} from "@layouts/Workspace/workspaceStyle";
+import gravatar from 'gravatar';
+import loadable from "@loadable/component";
+const Channel = loadable(() => import('@pages/Channel/Channel'));
+const DirectMessage = loadable(() => import('@pages/DirectMessage/DirectMessage'));
 
 type Props = {
 	children?: React.ReactNode;
@@ -33,6 +46,7 @@ const Workspace: FC<Props> = ({ children }) => {
 				console.log('Workspace res >>>>> ', res);
 				//await mutate(res.data, true);
 				await mutate(false, false); // false 서버에 요청 보내지 않고 로컬데이터를 수정. 보내할 사항이면 true 사용해야 함.
+				navigate('/login');
 			})
 			.catch(error => {
 				console.log('에러발생 >>>> ', error.response);
@@ -41,21 +55,40 @@ const Workspace: FC<Props> = ({ children }) => {
 
 	console.log('Workspace data1 >>>>> ', data);
 
-	useEffect(() => {
+//	useEffect(() => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		if (data == 'ok' || !data) {
-			console.log('login 으로 이동', data == 'ok');
-			navigate('/login');
-		}
+		//if (data == 'ok' || !data) {
+		//	console.log('login 으로 이동', data == 'ok');
+		//	navigate('/login');
+		//}
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-	}, [data]);
+	//}, [data]);
 
 	return (
 		<div>
+			<Header>
+				<RightMenu>
+					<span>
+						<ProfileImg src={gravatar.url(data?.nickname, {s: '28px', d: 'retro'})} alt={data?.email}></ProfileImg>
+					</span>
+				</RightMenu>
+			</Header>
 			<button onClick={onLogout}>로그아웃</button>
-			{children}
+			<WorkspaceWrapper>
+				<Workspaces>Workspaces<br/>test</Workspaces>
+				<Channels>
+					<WorkspaceName>WorkspaceName Sleact</WorkspaceName>
+					<MenuScroll>menu scroll</MenuScroll>
+				</Channels>
+				<Chats>
+					<Routes>
+						<Route path="channel" element={<Channel />} />
+						<Route path="dm" element={<DirectMessage />} />
+					</Routes>
+				</Chats>
+			</WorkspaceWrapper>
 		</div>
 	);
 };
