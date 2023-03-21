@@ -47,6 +47,7 @@ const Login = () => {
 					// @ts-ignore
 					// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
 					//	navigate('/channel');
+					navigate('/workspace/channel');
 				})
 				.catch(error => {
 					setLogInError(error.response?.data?.statusCode === 401);
@@ -60,7 +61,7 @@ const Login = () => {
 
 	console.log('Login data >>>>> ', data);
 
-	useEffect(() => {
+	/*useEffect(() => {
 		console.log('Login useEffect change data >>>>> ', data);
 		// useEffect 처리 하지 않으면 warning 발생 함.
 		if (data) {
@@ -68,7 +69,7 @@ const Login = () => {
 			// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
 			navigate('/workspace/channel');
 		}
-	}, [data]);
+	}, [data]);*/
 
 	return (
 		<div id="container">
