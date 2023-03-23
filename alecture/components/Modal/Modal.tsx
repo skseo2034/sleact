@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { CloseModalButton, CreateModal } from '@components/Modal/modalStyle';
 
-interface modalPropsType {
+export interface modalPropsType {
 	show: boolean;
 	onCloseModal: () => void;
 	children?: React.ReactNode;
