@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import loadable from '@loadable/component';
-import Channel from "@pages/Channel/Channel";
+import Channel from '@pages/Channel/Channel';
 import DirectMessage from '@pages/DirectMessage/DirectMessage';
 
 const SignUp = loadable(() => import('@pages/SignUp/SignUp'), {
@@ -18,7 +18,7 @@ const App = () => {
 				<Route path="/login" element={<Login />} />
 				<Route path="/signup" element={<SignUp />} />
 				{/*<Route path="/channel/:email" element={<Channel />} />*/}
-				<Route path="/workspace/*" element={<Workspace />} />
+				<Route path="/workspace/:workspace/*" element={<Workspace />} />
 				{/*<Route path="/workspace/channel" element={<Channel />} />
 				<Route path="/workspace/dm" element={<DirectMessage />} />*/}
 			</Routes>
