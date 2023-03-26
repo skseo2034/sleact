@@ -11,6 +11,7 @@ interface Props {
   userData?: IUser;
 }
 
+// @ts-ignore
 const DMList: FC<Props> = ({ userData }) => {
   const { workspace } = useParams<{ workspace: string }>();
   const [channelCollapse, setChannelCollapse] = useState(false);

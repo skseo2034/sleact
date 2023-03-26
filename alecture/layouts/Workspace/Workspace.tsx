@@ -32,6 +32,8 @@ import { useParams } from 'react-router';
 import InviteWorkspaceModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
 import InviteChannelModalModal from '@components/InviteChannelModalModal/InviteChannelModalModal';
+import ChannelList from '@components/ChannelList/ChannelList';
+import DMList from '@components/DMList/DMList';
 const Channel = loadable(() => import('@pages/Channel/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage/DirectMessage'));
 
@@ -52,21 +54,28 @@ const Workspace: FC<Props> = () => {
 	const { workspace } = useParams<string>();
 	// console.log('workspace', workspace);
 	const navigate = useNavigate();
-	const API_URL = process.env.REACT_APP_API_URL;
-	const PORT = process.env.REACT_APP_PORT; // 3095
+	// const API_URL = process.env.REACT_APP_API_URL;
+	// const PORT = process.env.REACT_APP_PORT; // 3095
 	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
 	const reqUserInfoUrl = '/api/users';
-	const reqLogoutUrl = `${API_URL}:${PORT}/api/users/logout`;
+	const reqLogoutUrl = '/api/users/logout';
 
-	const { data, error, mutate } = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
+	const {
+		data: userData,
+		error,
+		mutate,
+	} = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
 		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
 	});
 
-	console.log('data', data);
+	console.log('data', userData);
 	const { data: channelData } = useSWR<IChannel[]>(
-		data ? `http://localhost:3095/api/workspaces/${workspace}/channels` : null,
+		userData ? `/api/workspaces/${workspace}/channels` : null,
 		fetcher
 	);
+	console.log('channelData', channelData);
+
+	const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
 	console.log('channelData', channelData);
 
 	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
@@ -89,7 +98,7 @@ const Workspace: FC<Props> = () => {
 			});
 	}, []);
 
-	console.log('Workspace data1 >>>>> ', data);
+	console.log('Workspace data1 >>>>> ', userData);
 
 	//	useEffect(() => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -180,18 +189,18 @@ const Workspace: FC<Props> = () => {
 				<RightMenu>
 					<span onClick={onClickUserProfile}>
 						<ProfileImg
-							src={gravatar.url((data as IUser)?.nickname, { s: '28px', d: 'retro' })}
-							alt={(data as IUser)?.email}
+							src={gravatar.url((userData as IUser)?.nickname, { s: '28px', d: 'retro' })}
+							alt={(userData as IUser)?.email}
 						></ProfileImg>
 						{showUserMenu && (
 							<Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
 								<ProfileModal>
 									<img
-										src={gravatar.url((data as IUser)?.nickname, { s: '36px', d: 'retro' })}
-										alt={(data as IUser)?.email}
+										src={gravatar.url((userData as IUser)?.nickname, { s: '36px', d: 'retro' })}
+										alt={(userData as IUser)?.email}
 									/>
 									<div>
-										<span id="profile-name">{(data as IUser)?.nickname}</span>
+										<span id="profile-name">{(userData as IUser)?.nickname}</span>
 										<span id="profile-active">Active</span>
 									</div>
 								</ProfileModal>
@@ -203,7 +212,7 @@ const Workspace: FC<Props> = () => {
 			</Header>
 			<WorkspaceWrapper>
 				<Workspaces>
-					{(data as IUser)?.Workspaces?.map(ws => {
+					{(userData as IUser)?.Workspaces?.map(ws => {
 						return (
 							<Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
 								<WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
@@ -226,9 +235,8 @@ const Workspace: FC<Props> = () => {
 								<button onClick={onLogout}>로그아웃</button>
 							</WorkspaceModal>
 						</Menu>
-						{channelData?.map(v => (
-							<div key={v.id}>{v.name}</div>
-						))}
+						<ChannelList channelData={channelData} />
+						<DMList />
 					</MenuScroll>
 				</Channels>
 				<Chats>

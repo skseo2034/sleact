@@ -22,9 +22,10 @@ const CreateChannelModal: React.FC<createChannelModalPrposType> = ({
 	const [newChannel, onChangeNewChannel, setNewChannel] = useInput('');
 	const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
 
-	const API_URL = process.env.REACT_APP_API_URL;
-	const PORT = process.env.REACT_APP_PORT; // 3095
-	const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	// const API_URL = process.env.REACT_APP_API_URL;
+	// const PORT = process.env.REACT_APP_PORT; // 3095
+	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	const reqUserInfoUrl = '/api/users';
 
 	const { data, error, mutate } = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
 		dedupingInterval: 2000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
@@ -34,7 +35,7 @@ const CreateChannelModal: React.FC<createChannelModalPrposType> = ({
 		data: channelData,
 		error: errorChannel,
 		mutate: mutateChannel,
-	} = useSWR<IChannel[]>(data ? `http://localhost:3095/api/workspaces/${workspace}/channels` : null, fetcher);
+	} = useSWR<IChannel[]>(data ? `/api/workspaces/${workspace}/channels` : null, fetcher);
 
 	const onCreateChannel = useCallback(
 		(e: any) => {
