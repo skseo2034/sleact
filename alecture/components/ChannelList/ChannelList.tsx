@@ -13,7 +13,7 @@ interface Props {
 
 const reqUserInfoUrl = '/api/users';
 
-const ChannelList: FC<Props> = ({ channelData }) => {
+const ChannelList: FC = () => {
 	const {
 		data: userData,
 		error,
@@ -21,7 +21,12 @@ const ChannelList: FC<Props> = ({ channelData }) => {
 	} = useSWR<IUser>(reqUserInfoUrl, fetcher, {
 		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
 	});
+
 	const { workspace } = useParams<{ workspace?: string }>();
+	const { data: channelData } = useSWR<IChannel[]>(
+		userData ? `/api/workspaces/${workspace}/channels` : null,
+		fetcher
+	);
 	const location = useLocation();
 	// const [socket] = useSocket(workspace);
 	const [channelCollapse, setChannelCollapse] = useState(false);

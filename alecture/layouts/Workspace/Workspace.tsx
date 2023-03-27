@@ -76,7 +76,7 @@ const Workspace: FC<Props> = () => {
 	console.log('channelData', channelData);
 
 	const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
-	console.log('channelData', channelData);
+	console.log('memberData', memberData);
 
 	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
 	const { data: localType } = useSWR('localType');
@@ -180,7 +180,7 @@ const Workspace: FC<Props> = () => {
 	}, []);
 
 	const onClickInviteWorkspace = useCallback(() => {
-		setShowCreateChannelModal(true);
+		setShowInviteWorkspaceModal(true);
 	}, []);
 
 	return (
@@ -235,7 +235,7 @@ const Workspace: FC<Props> = () => {
 								<button onClick={onLogout}>로그아웃</button>
 							</WorkspaceModal>
 						</Menu>
-						<ChannelList channelData={channelData} />
+						<ChannelList />
 						<DMList />
 					</MenuScroll>
 				</Channels>
