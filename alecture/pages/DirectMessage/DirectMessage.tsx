@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import useSWR from 'swr';
 import { IUser } from '@typings/db';
 import { fetcher } from '@utils/fetcher';
@@ -7,6 +7,7 @@ import { Container, Header } from '@pages/DirectMessage/directMessageStyle';
 import { useParams } from 'react-router';
 import ChatBox from '@components/ChatBox/ChatBox';
 import ChatList from '@components/ChatList/ChatList';
+import useInput from '@hooks/useInput';
 
 const DirectMessage = () => {
 	const { workspace, id } = useParams();
@@ -28,6 +29,12 @@ const DirectMessage = () => {
 		dedupingInterval: 2000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
 	});
 
+	const [chat, onChangeChat] = useInput('');
+	const onSubmitForm = useCallback((e: any) => {
+		console.log('DirectMessage onSubmitForm');
+		e.preventDefault();
+	}, []);
+
 	console.log('theOtherPartyUserData={}, myData={}', theOtherPartyUserData, myData);
 	if (!theOtherPartyUserData || !myData) {
 		return null;
@@ -43,7 +50,7 @@ const DirectMessage = () => {
 				<span>{theOtherPartyUserData.nickname}</span>
 			</Header>
 			<ChatList />
-			<ChatBox chat="" />
+			<ChatBox chat={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm} />
 		</Container>
 	);
 };
