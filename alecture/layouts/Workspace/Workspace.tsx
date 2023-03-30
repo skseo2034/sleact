@@ -31,9 +31,10 @@ import CreateChannelModal from '@components/CreateChannelModal/CreateChannelModa
 import { useParams } from 'react-router';
 import InviteWorkspaceModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
-import InviteChannelModalModal from '@components/InviteChannelModalModal/InviteChannelModalModal';
+import InviteChannelModalModal from '@components/InviteChannelModal/InviteChannelModal';
 import ChannelList from '@components/ChannelList/ChannelList';
 import DMList from '@components/DMList/DMList';
+import { useMutation, useQuery } from 'react-query';
 const Channel = loadable(() => import('@pages/Channel/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage/DirectMessage'));
 
@@ -60,30 +61,128 @@ const Workspace: FC<Props> = () => {
 	const reqUserInfoUrl = '/api/users';
 	const reqLogoutUrl = '/api/users/logout';
 
-	const {
+	/*const {
 		data: userData,
 		error,
 		mutate,
 	} = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
 		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
+	});*/
+
+	const {
+		isLoading,
+		isError,
+		data: loginUserInfoData,
+		error,
+	} = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
+		retry: 0, // 실패시 재호출 몇번 할지
+		onSuccess: data => {
+			// 성공시 호출
+			console.log('loginUserInfo', data);
+		},
+		onError: (e: any) => {
+			// 실패시 호출 (401, 404 같은 error가 아니라 정말 api 호출이 실패한 경우만 호출됩니다.)
+			// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
+			console.log(e.message);
+		},
 	});
 
-	console.log('data', userData);
-	const { data: channelData } = useSWR<IChannel[]>(
-		userData ? `/api/workspaces/${workspace}/channels` : null,
-		fetcher
-	);
-	console.log('channelData', channelData);
+	if (isLoading) {
+		console.log('LOADING');
+		//return "Loading...";
+	}
 
-	const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
+	if (isError) {
+		console.log('error', error.message);
+		//return "An error has occurred: " + error;
+	}
+
+	console.log('data', loginUserInfoData);
+	/*const { data: channelData } = useSWR<IChannel[]>(
+		loginUserInfoData ? `/api/workspaces/${workspace}/channels` : null,
+		fetcher
+	);*/
+	const getChannelsUrl = `/api/workspaces/${workspace}/channels`;
+	const { data: channelData } = useQuery(['channelData', getChannelsUrl], () => fetcher(getChannelsUrl), {
+		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
+		retry: 0, // 실패시 재호출 몇번 할지
+		enabled: loginUserInfoData,
+		onSuccess: data => {
+			// 성공시 호출
+			console.log('workspaces channelData', data);
+		},
+		onError: (e: any) => {
+			// 실패시 호출 (401, 404 같은 error가 아니라 정말 api 호출이 실패한 경우만 호출됩니다.)
+			// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
+			console.log('workspace getChannels Error', e.message);
+		},
+	});
+
+	//console.log('channelData', channelData);
+
+	/*const { data: memberData } = useSWR<IUser[]>(
+		loginUserInfoData ? `/api/workspaces/${workspace}/members` : null,
+		fetcher
+	);*/
+	const reqMemberDataUrl = `/api/workspaces/${workspace}/members`;
+	const {
+		isLoading: isMemberDataLoading,
+		isError: isMemberDataError,
+		data: memberData,
+		error: memberDataError,
+	} = useQuery(['workspaceMemberData', reqMemberDataUrl], () => fetcher(reqMemberDataUrl), {
+		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
+		retry: 0, // 실패시 재호출 몇번 할지
+		enabled: !!loginUserInfoData, // true 이면 실행, 즉, loginUserInfoData가 있으면 실행
+		onSuccess: data => {
+			// 성공시 호출
+			console.log('workspace MemberData', data);
+		},
+		onError: (e: any) => {
+			// 실패시 호출 (401, 404 같은 error가 아니라 정말 api 호출이 실패한 경우만 호출됩니다.)
+			// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
+			console.log('workspace getMembers Error', e.message);
+		},
+	});
+
+	if (isMemberDataLoading) {
+		console.log('LOADING');
+		//return "Loading...";
+	}
+
+	if (isMemberDataError) {
+		console.log('error', error.message);
+		//return "An error has occurred: " + error;
+	}
+
 	console.log('memberData', memberData);
 
 	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
 	const { data: localType } = useSWR('localType');
 	console.log('localType', localType);
 
+	const logoutMutation = useMutation(
+		() =>
+			axios.post(reqLogoutUrl, null, { withCredentials: true }).then(async res => {
+				return res.data;
+			}),
+		{
+			onSuccess(data) {
+				console.log('Workspace res >>>>> ', data);
+				navigate('/login');
+			},
+			onError(error) {
+				console.log('Failed', error);
+			},
+			onSettled() {
+				console.log('Mutation completed.');
+			},
+		}
+	);
+
 	const onLogout = useCallback(() => {
-		axios
+		/*axios
 			.post(reqLogoutUrl, null, {
 				withCredentials: true, // 쿠키를 항상 공유하기 위해서 true 로 함.
 			})
@@ -95,10 +194,11 @@ const Workspace: FC<Props> = () => {
 			})
 			.catch(error => {
 				console.log('에러발생 >>>> ', error.response);
-			});
+			});*/
+		logoutMutation.mutate();
 	}, []);
 
-	console.log('Workspace data1 >>>>> ', userData);
+	console.log('Workspace data1 >>>>> ', loginUserInfoData);
 
 	//	useEffect(() => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -126,6 +226,38 @@ const Workspace: FC<Props> = () => {
 		setShowCreateWorkspaceModal(true);
 	}, []);
 
+	const onCreateWorkspaceMutation = useMutation(
+		() =>
+			axios
+				.post(
+					'/api/workspaces',
+					{
+						workspace: newWorkspace,
+						url: newUrl,
+					},
+					{ withCredentials: true }
+				)
+				.then(async res => {
+					return res.data;
+				}),
+		{
+			onSuccess(data) {
+				console.log('Workspace res >>>>> ', data);
+				setShowCreateWorkspaceModal(false);
+				setNewWorkspace('');
+				setNewUrl('');
+				//	toast.success('생성완료', { position: 'bottom-center' });
+				alert('생성완료');
+			},
+			onError(error) {
+				console.log('Failed', error);
+			},
+			onSettled() {
+				console.log('onCreateWorkspaceMutation completed.');
+			},
+		}
+	);
+
 	const onCreateWorkspace = useCallback(
 		(e: React.FormEvent) => {
 			e.preventDefault(); // form submit 할때 새로고침 안되게 함.
@@ -136,7 +268,7 @@ const Workspace: FC<Props> = () => {
 				return;
 			}
 
-			axios
+			/*axios
 				.post(
 					'/api/workspaces',
 					{
@@ -159,7 +291,8 @@ const Workspace: FC<Props> = () => {
 				.catch(error => {
 					console.dir(error);
 					toast.error(error.response?.data, { position: 'bottom-center' });
-				});
+				});*/
+			onCreateWorkspaceMutation.mutate();
 		},
 		[newWorkspace, newUrl]
 	);
@@ -189,18 +322,21 @@ const Workspace: FC<Props> = () => {
 				<RightMenu>
 					<span onClick={onClickUserProfile}>
 						<ProfileImg
-							src={gravatar.url((userData as IUser)?.nickname, { s: '28px', d: 'retro' })}
-							alt={(userData as IUser)?.email}
+							src={gravatar.url((loginUserInfoData as IUser)?.nickname, { s: '28px', d: 'retro' })}
+							alt={(loginUserInfoData as IUser)?.email}
 						></ProfileImg>
 						{showUserMenu && (
 							<Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
 								<ProfileModal>
 									<img
-										src={gravatar.url((userData as IUser)?.nickname, { s: '36px', d: 'retro' })}
-										alt={(userData as IUser)?.email}
+										src={gravatar.url((loginUserInfoData as IUser)?.nickname, {
+											s: '36px',
+											d: 'retro',
+										})}
+										alt={(loginUserInfoData as IUser)?.email}
 									/>
 									<div>
-										<span id="profile-name">{(userData as IUser)?.nickname}</span>
+										<span id="profile-name">{(loginUserInfoData as IUser)?.nickname}</span>
 										<span id="profile-active">Active</span>
 									</div>
 								</ProfileModal>
@@ -212,7 +348,7 @@ const Workspace: FC<Props> = () => {
 			</Header>
 			<WorkspaceWrapper>
 				<Workspaces>
-					{(userData as IUser)?.Workspaces?.map(ws => {
+					{(loginUserInfoData as IUser)?.Workspaces?.map(ws => {
 						return (
 							<Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
 								<WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>

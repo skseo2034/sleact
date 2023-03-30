@@ -4,9 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import axios from 'axios';
 import useSWR from 'swr';
-import useInput from "../../hooks/useInput";
-import {fetcher} from "../../utils/fetcher";
-
+import useInput from '../../hooks/useInput';
+import { fetcher } from '../../utils/fetcher';
+import { useQuery } from 'react-query';
 
 const SingUp = () => {
 	const navigate = useNavigate();
@@ -14,10 +14,40 @@ const SingUp = () => {
 	const PORT = process.env.REACT_APP_PORT; // 3095
 	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
 	const reqUserInfoUrl = '/api/users';
-	const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
+	/*const { data, error, mutate } = useSWR(reqUserInfoUrl, fetcher, {
 		// data 나 error 이 바뀌면 리랜더링 된다.
 		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄
+	});*/
+
+	const {
+		isLoading,
+		isError,
+		data: loginUserInfoData,
+		error,
+	} = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
+		retry: 0, // 실패시 재호출 몇번 할지
+		onSuccess: data => {
+			// 성공시 호출
+			console.log('loginUserInfo', data);
+		},
+		onError: (e: any) => {
+			// 실패시 호출 (401, 404 같은 error가 아니라 정말 api 호출이 실패한 경우만 호출됩니다.)
+			// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
+			console.log(e.message);
+		},
 	});
+
+	if (isLoading) {
+		console.log('LOADING');
+		//return "Loading...";
+	}
+
+	if (isError) {
+		console.log('error', error.message);
+		//return "An error has occurred: " + error;
+	}
+
 	// const { data, isLoading, error } = fetcher1(reqUserInfoUrl);
 	// const [email, setEmail] = useState('');
 	const [email, onChangeEmail, setEmail] = useInput('');
@@ -56,7 +86,9 @@ const SingUp = () => {
 					.catch(error => {
 						setSignUpError(error.response.data);
 					})
-					.finally(() => {});
+					.finally(() => {
+						// finally code
+					});
 			}
 		},
 		[email, nickname, password, passwordCheck]
@@ -80,20 +112,25 @@ const SingUp = () => {
 		[password]
 	);
 
-	console.log('data1111 >>> ', data);
+	console.log('SignUp loginUserInfoData >>> ', loginUserInfoData);
 
-	useEffect(() => {
+	/*useEffect(() => {
 		console.log('sing up use effect1 >>>>> ', data);
 		// useEffect 처리 하지 않으면 warning 발생 함.
 		if (data) {
 			// navigate('/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
 			navigate('/workspace/channel');
 		}
-	}, [data]);
+	}, [data]);*/
 
 	/*if (!data) {
 		return <div>Loading....</div>
 	}*/
+
+	if (loginUserInfoData) {
+		console.log('SignUp 페이지 -> 채널페이지로 이동');
+		navigate('/workspace/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
+	}
 
 	return (
 		<div id="container">

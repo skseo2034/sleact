@@ -1,7 +1,7 @@
 import Modal from '@components/Modal/Modal';
 import useInput from '@hooks/useInput';
 import { Button, Input, Label } from '@pages/SignUp/signUpStyle';
-import { IChannel, IUser } from '@typings/db';
+import { IUser } from '@typings/db';
 import { fetcher } from '@utils/fetcher';
 import axios from 'axios';
 import React, { FC, useCallback } from 'react';
@@ -13,13 +13,16 @@ import { useMutation, useQuery } from 'react-query';
 interface Props {
 	show: boolean;
 	onCloseModal: () => void;
-	setShowInviteWorkspaceModal: (flag: boolean) => void;
+	setShowInviteChannelModal: (flag: boolean) => void;
 }
-const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWorkspaceModal }) => {
-	const { workspace } = useParams<{ workspace: string; channel: string }>();
+
+const reqUserInfoUrl = '/api/users';
+
+const InviteChannelModal: FC<Props> = ({ show, onCloseModal, setShowInviteChannelModal }) => {
+	const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
+	console.log('seo >>>>>>>>>>>>>>>>>>', useParams());
 	const [newMember, onChangeNewMember, setNewMember] = useInput('');
-	/*const { data: userData } = useSWR<IUser>('/api/users', fetcher);*/
-	const reqUserInfoUrl = '/api/users';
+	// const { data: userData } = useSWR<IUser>('/api/users', fetcher);
 	const { data: userData } = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
@@ -34,23 +37,28 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 		},
 	});
 
-	/*const { mutate } = useSWR<IChannel[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);*/
-	const workspacesMemberUrl = `/api/workspaces/${workspace}/members`;
-	const { data: workspacesMemberData } = useQuery(
-		['workspacesMemberData', workspacesMemberUrl],
-		() => fetcher(workspacesMemberUrl),
+	/*const { mutate } = useSWR<IUser[]>(
+		userData && channel ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
+		fetcher
+	);*/
+
+	const channelMemberUrl = `/api/workspaces/${workspace}/channels/${channel}/members`;
+
+	const { data: channelMemberData } = useQuery(
+		['channelMemberData', channelMemberUrl],
+		() => fetcher(channelMemberUrl),
 		{
 			refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 			retry: 0, // 실패시 재호출 몇번 할지
-			enabled: userData,
+			enabled: userData && channel,
 			onSuccess: data => {
 				// 성공시 호출
-				console.log('workspacesMemberData', data);
+				console.log('channelMemberData', data);
 			},
 			onError: (e: any) => {
 				// 실패시 호출 (401, 404 같은 error가 아니라 정말 api 호출이 실패한 경우만 호출됩니다.)
 				// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
-				console.log(e.message);
+				console.log('InviteChannelModal getChannelMemebrData Error', e.message);
 			},
 		}
 	);
@@ -58,14 +66,18 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 	const mutation = useMutation(
 		() =>
 			axios
-				.post(`/api/workspaces/${workspace}/members`, { email: newMember }, { withCredentials: true })
+				.post(
+					`/api/workspaces/${workspace}/channels/${channel}/members`,
+					{ email: newMember },
+					{ withCredentials: true }
+				)
 				.then(async res => {
 					return res.data;
 				}),
 		{
 			onSuccess(data) {
 				console.log('onInviteMember Succesful', data);
-				setShowInviteWorkspaceModal(false);
+				setShowInviteChannelModal(false);
 				setNewMember('');
 			},
 			onError(error: any) {
@@ -85,12 +97,12 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 				return;
 			}
 			/*axios
-				.post(`/api/workspaces/${workspace}/members`, {
+				.post(`/api/workspaces/${workspace}/channels/${channel}/members`, {
 					email: newMember,
 				})
-				.then(async response => {
+				.then(async () => {
 					await mutate();
-					setShowInviteWorkspaceModal(false);
+					setShowInviteChannelModal(false);
 					setNewMember('');
 				})
 				.catch(error => {
@@ -99,15 +111,15 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 				});*/
 			mutation.mutate();
 		},
-		[workspace, newMember]
+		[newMember]
 	);
 
 	return (
 		<Modal show={show} onCloseModal={onCloseModal}>
 			<form onSubmit={onInviteMember}>
 				<Label id="member-label">
-					<span>이메일</span>
-					<Input id="member" type="email" value={newMember} onChange={onChangeNewMember} />
+					<span>채널 멤버 초대</span>
+					<Input id="member" value={newMember} onChange={onChangeNewMember} />
 				</Label>
 				<Button type="submit">초대하기</Button>
 			</form>
@@ -115,4 +127,4 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 	);
 };
 
-export default InviteWorkspaceModal;
+export default InviteChannelModal;
