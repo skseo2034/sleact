@@ -15,7 +15,7 @@ const DMList = () => {
 
 	/*const { data: userData } = useSWR<IUser>(reqUserInfoUrl, fetcher);*/
 
-	const { data: userData } = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+	const { data: userData } = useQuery('loginUserInfo', () => fetcher({ fetchUrl: reqUserInfoUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -36,8 +36,8 @@ const DMList = () => {
 
 	const reqMemberDataUrl = `/api/workspaces/${workspace}/members`;
 	const { data: workspacesMemberData } = useQuery<IUserWithOnline[]>(
-		['memberData', reqMemberDataUrl],
-		() => fetcher(reqMemberDataUrl),
+		'memberData',
+		() => fetcher({ fetchUrl: reqMemberDataUrl }),
 		{
 			refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 			retry: 0, // 실패시 재호출 몇번 할지

@@ -3,7 +3,7 @@ import useInput from '@hooks/useInput';
 import { Button, Input, Label } from '@pages/SignUp/signUpStyle';
 import { IChannel, IUser } from '@typings/db';
 import { fetcher } from '@utils/fetcher';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import React, { FC, useCallback } from 'react';
 import { useParams } from 'react-router';
 import { toast } from 'react-toastify';
@@ -20,7 +20,7 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 	const [newMember, onChangeNewMember, setNewMember] = useInput('');
 	/*const { data: userData } = useSWR<IUser>('/api/users', fetcher);*/
 	const reqUserInfoUrl = '/api/users';
-	const { data: userData } = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+	const { data: userData } = useQuery('loginUserInfo', () => fetcher({ fetchUrl: reqUserInfoUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -37,12 +37,12 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 	/*const { mutate } = useSWR<IChannel[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);*/
 	const workspacesMemberUrl = `/api/workspaces/${workspace}/members`;
 	const { data: workspacesMemberData } = useQuery(
-		['workspacesMemberData', workspacesMemberUrl],
-		() => fetcher(workspacesMemberUrl),
+		'workspacesMemberData',
+		() => fetcher({ fetchUrl: workspacesMemberUrl }),
 		{
 			refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 			retry: 0, // 실패시 재호출 몇번 할지
-			enabled: userData,
+			enabled: !!userData,
 			onSuccess: data => {
 				// 성공시 호출
 				console.log('workspacesMemberData', data);
@@ -55,18 +55,16 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 		}
 	);
 
-	const mutation = useMutation(
-		() =>
-			axios
-				.post(`/api/workspaces/${workspace}/members`, { email: newMember }, { withCredentials: true })
-				.then(async res => {
-					return res.data;
-				}),
+	const mutation = useMutation<IUser, AxiosError, { email: string }>(
+		data =>
+			axios.post(`/api/workspaces/${workspace}/members`, data, { withCredentials: true }).then(res => res.data),
 		{
-			onSuccess(data) {
-				console.log('onInviteMember Succesful', data);
+			onMutate() {
 				setShowInviteWorkspaceModal(false);
 				setNewMember('');
+			},
+			onSuccess(data) {
+				console.log('onInviteMember Succesful', data);
 			},
 			onError(error: any) {
 				console.dir(error);
@@ -97,7 +95,7 @@ const InviteWorkspaceModal: FC<Props> = ({ show, onCloseModal, setShowInviteWork
 					console.dir(error);
 					toast.error(error.response?.data, { position: 'bottom-center' });
 				});*/
-			mutation.mutate();
+			mutation.mutate({ email: newMember });
 		},
 		[workspace, newMember]
 	);

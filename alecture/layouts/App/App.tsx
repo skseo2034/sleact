@@ -18,7 +18,10 @@ const App = () => {
 				<Route path="/login" element={<Login />} />
 				<Route path="/signup" element={<SignUp />} />
 				{/*<Route path="/channel/:email" element={<Channel />} />*/}
-				<Route path="/workspace/:workspace/*" element={<Workspace />} />
+				<Route path="/workspace/:workspace/*" element={<Workspace />}>
+					<Route path="channel/:channel" element={<Channel />} />
+					<Route path="dm/:id" element={<DirectMessage />} />
+				</Route>
 				{/*<Route path="/workspace/channel" element={<Channel />} />
 				<Route path="/workspace/dm" element={<DirectMessage />} />*/}
 			</Routes>

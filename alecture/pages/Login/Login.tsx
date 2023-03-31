@@ -1,14 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import { Button, Form, Header, Input, Label, LinkContainer, Error } from '../SignUp/signUpStyle';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 // import useSWR, {mutate} from 'swr';
 import useSWR from 'swr';
 import useInput from '../../hooks/useInput';
 import { fetcher } from '../../utils/fetcher';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { IUser } from '@typings/db';
 
 const Login = () => {
+	const queryClient = useQueryClient();
 	const [email, onChangeEmail, setEmail] = useInput('');
 	const [password, setpassword] = useState('');
 	const [logInError, setLogInError] = useState(false);
@@ -30,7 +32,7 @@ const Login = () => {
 		isError,
 		data: loginUserInfoData,
 		error,
-	} = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+	} = useQuery('loginUserInfo', () => fetcher({ fetchUrl: reqUserInfoUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -62,22 +64,25 @@ const Login = () => {
 		return 'ko_KR';
 	});
 
-	const mutation = useMutation(
-		() =>
-			axios.post(reqLogInUrl, { email, password }, { withCredentials: true }).then(async res => {
-				return res.data;
-			}),
+	const mutation = useMutation<IUser, AxiosError, { email: string; password: string }>(
+		'loginUserInfo',
+		data => axios.post(reqLogInUrl, data, { withCredentials: true }).then(res => res.data),
 		{
-			onSuccess(data) {
-				console.log('resLogInUserInfo Succesful', data);
-				navigate('/workspace/Sleact/channel/일반');
+			onMutate() {
+				setLogInError(false);
+			},
+			async onSuccess(data) {
+				// console.log('resLogInUserInfo Succesful', data);
+				// navigate('/workspace/Sleact/channel/일반');
+				await queryClient.refetchQueries('loginUserInfo');
 			},
 			onError(error) {
 				console.log('Failed', error);
 				setLogInError(true);
+				// setLogInError(error.response?.data?.code === 401);
 			},
 			onSettled() {
-				console.log('Mutation completed.');
+				console.log('Login Mutation completed.');
 			},
 		}
 	);
@@ -106,7 +111,7 @@ const Login = () => {
 				.finally(() => {
 					//...
 				});*/
-			mutation.mutate();
+			mutation.mutate({ email, password });
 		},
 		[email, password]
 	);
@@ -125,7 +130,7 @@ const Login = () => {
 
 	if (loginUserInfoData) {
 		console.log('채널페이지로 이동');
-		navigate('/workspace/channel', { state: { email: email } }); // 회원 메인 페이지로 이동
+		navigate('/workspace/Sleact/channel/일반', { state: { email: email } });
 	}
 
 	return (

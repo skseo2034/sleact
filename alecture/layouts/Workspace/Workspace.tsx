@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { fetcher } from '@utils/fetcher';
 import {
@@ -29,12 +29,13 @@ import useInput from '@hooks/useInput';
 import { toast } from 'react-toastify';
 import CreateChannelModal from '@components/CreateChannelModal/CreateChannelModal';
 import { useParams } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import InviteWorkspaceModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteWorkspaceModal/InviteWorkspaceModal';
 import InviteChannelModalModal from '@components/InviteChannelModal/InviteChannelModal';
 import ChannelList from '@components/ChannelList/ChannelList';
 import DMList from '@components/DMList/DMList';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 const Channel = loadable(() => import('@pages/Channel/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage/DirectMessage'));
 
@@ -43,6 +44,7 @@ type Props = {
 };
 
 const Workspace: FC<Props> = () => {
+	const queryClient = useQueryClient();
 	const [showUserMenu, setShowUserMenu] = useState(false);
 	const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
 	const [newWorkspace, onChangeNewWorkspace, setNewWorkspace] = useInput('');
@@ -74,7 +76,7 @@ const Workspace: FC<Props> = () => {
 		isError,
 		data: loginUserInfoData,
 		error,
-	} = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+	} = useQuery('loginUserInfo', () => fetcher({ fetchUrl: reqUserInfoUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -104,10 +106,10 @@ const Workspace: FC<Props> = () => {
 		fetcher
 	);*/
 	const getChannelsUrl = `/api/workspaces/${workspace}/channels`;
-	const { data: channelData } = useQuery(['channelData', getChannelsUrl], () => fetcher(getChannelsUrl), {
+	const { data: channelData } = useQuery('channelData', () => fetcher({ fetchUrl: getChannelsUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
-		enabled: loginUserInfoData,
+		enabled: !!loginUserInfoData,
 		onSuccess: data => {
 			// 성공시 호출
 			console.log('workspaces channelData', data);
@@ -131,7 +133,7 @@ const Workspace: FC<Props> = () => {
 		isError: isMemberDataError,
 		data: memberData,
 		error: memberDataError,
-	} = useQuery(['workspaceMemberData', reqMemberDataUrl], () => fetcher(reqMemberDataUrl), {
+	} = useQuery('workspaceMemberData', () => fetcher({ fetchUrl: reqMemberDataUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		enabled: !!loginUserInfoData, // true 이면 실행, 즉, loginUserInfoData가 있으면 실행
@@ -162,15 +164,15 @@ const Workspace: FC<Props> = () => {
 	const { data: localType } = useSWR('localType');
 	console.log('localType', localType);
 
-	const logoutMutation = useMutation(
-		() =>
-			axios.post(reqLogoutUrl, null, { withCredentials: true }).then(async res => {
-				return res.data;
-			}),
+	const logoutMutation = useMutation<IUser, AxiosError>(
+		() => axios.post(reqLogoutUrl, null, { withCredentials: true }).then(res => res.data),
 		{
+			onMutate() {
+				navigate('/login');
+			},
 			onSuccess(data) {
 				console.log('Workspace res >>>>> ', data);
-				navigate('/login');
+				queryClient.refetchQueries('loginUserInfo');
 			},
 			onError(error) {
 				console.log('Failed', error);
@@ -226,28 +228,18 @@ const Workspace: FC<Props> = () => {
 		setShowCreateWorkspaceModal(true);
 	}, []);
 
-	const onCreateWorkspaceMutation = useMutation(
-		() =>
-			axios
-				.post(
-					'/api/workspaces',
-					{
-						workspace: newWorkspace,
-						url: newUrl,
-					},
-					{ withCredentials: true }
-				)
-				.then(async res => {
-					return res.data;
-				}),
+	const onCreateWorkspaceMutation = useMutation<IUser, AxiosError, { workspace: string; url: string }>(
+		data => axios.post('/api/workspaces', data, { withCredentials: true }).then(res => res.data),
 		{
-			onSuccess(data) {
-				console.log('Workspace res >>>>> ', data);
+			onMutate() {
 				setShowCreateWorkspaceModal(false);
 				setNewWorkspace('');
 				setNewUrl('');
-				//	toast.success('생성완료', { position: 'bottom-center' });
+			},
+			onSuccess(data) {
+				console.log('Workspace res >>>>> ', data);
 				alert('생성완료');
+				queryClient.refetchQueries(['workspace']);
 			},
 			onError(error) {
 				console.log('Failed', error);
@@ -292,7 +284,7 @@ const Workspace: FC<Props> = () => {
 					console.dir(error);
 					toast.error(error.response?.data, { position: 'bottom-center' });
 				});*/
-			onCreateWorkspaceMutation.mutate();
+			onCreateWorkspaceMutation.mutate({ workspace: newWorkspace, url: newUrl });
 		},
 		[newWorkspace, newUrl]
 	);
@@ -376,10 +368,10 @@ const Workspace: FC<Props> = () => {
 					</MenuScroll>
 				</Channels>
 				<Chats>
-					<Routes>
+					{/*<Routes>
 						<Route path="channel/:channel" element={<Channel />} />
 						<Route path="dm/:id" element={<DirectMessage />} />
-					</Routes>
+					</Routes>*/}
 				</Chats>
 			</WorkspaceWrapper>
 			<Modal show={showCreateWorkspaceModal} onCloseModal={onCloseModal}>
@@ -410,6 +402,7 @@ const Workspace: FC<Props> = () => {
 				onCloseModal={onCloseModal}
 				setShowInviteChannelModal={setShowInviteChannelModal}
 			/>
+			<Outlet />
 		</div>
 	);
 };

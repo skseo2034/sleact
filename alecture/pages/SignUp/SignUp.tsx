@@ -6,9 +6,12 @@ import axios from 'axios';
 import useSWR from 'swr';
 import useInput from '../../hooks/useInput';
 import { fetcher } from '../../utils/fetcher';
-import { useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { IUser } from '@typings/db';
+import { AxiosError } from 'axios/index';
 
 const SingUp = () => {
+	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const API_URL = process.env.REACT_APP_API_URL;
 	const PORT = process.env.REACT_APP_PORT; // 3095
@@ -24,7 +27,7 @@ const SingUp = () => {
 		isError,
 		data: loginUserInfoData,
 		error,
-	} = useQuery(['loginUserInfo', reqUserInfoUrl], () => fetcher(reqUserInfoUrl), {
+	} = useQuery('loginUserInfo', () => fetcher({ fetchUrl: reqUserInfoUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -59,6 +62,30 @@ const SingUp = () => {
 	const [signUpError, setSignUpError] = useState('');
 	const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+	const mutation = useMutation<IUser, AxiosError, { email: string; nickname: string; password: string }>(
+		'loginUserInfo',
+		data => axios.post(reqSignUrl, data, { withCredentials: true }).then(res => res.data),
+		{
+			onMutate() {
+				setSignUpSuccess(true);
+			},
+			async onSuccess(data) {
+				// console.log('resLogInUserInfo Succesful', data);
+				// navigate('/workspace/Sleact/channel/일반');
+
+				await queryClient.refetchQueries('loginUserInfo');
+			},
+			onError(error) {
+				console.log('Failed', error);
+				setSignUpError(error.message);
+				// setLogInError(error.response?.data?.code === 401);
+			},
+			onSettled() {
+				console.log('SignUp Mutation completed.');
+			},
+		}
+	);
+
 	// const reqSignUrl = `${API_URL}:${PORT}/api/users`; // 로컬호스트 3090이 3095에게 보내는 요청.
 	const reqSignUrl = '/api/users'; // 로컬호스트 3095가 3095에게 보내는 요청.
 	const onSubmit = useCallback(
@@ -73,7 +100,7 @@ const SingUp = () => {
 				setSignUpSuccess(false);
 				setSignUpError('');
 
-				axios
+				/*axios
 					.post(reqSignUrl, {
 						email,
 						nickname,
@@ -88,7 +115,8 @@ const SingUp = () => {
 					})
 					.finally(() => {
 						// finally code
-					});
+					});*/
+				mutation.mutate({ email, nickname, password });
 			}
 		},
 		[email, nickname, password, passwordCheck]
