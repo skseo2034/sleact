@@ -16,6 +16,7 @@ interface Props {
 }
 
 const ChatBox: FC<Props> = ({ chat, onSubmitForm, onChangeChat, placeholder }) => {
+	console.log('onSubmitForm', onSubmitForm);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	useEffect(() => {
 		if (textareaRef.current) {

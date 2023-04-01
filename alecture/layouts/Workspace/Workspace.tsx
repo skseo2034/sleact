@@ -198,7 +198,7 @@ const Workspace: FC<Props> = () => {
 				console.log('에러발생 >>>> ', error.response);
 			});*/
 		logoutMutation.mutate();
-	}, []);
+	}, [logoutMutation]);
 
 	console.log('Workspace data1 >>>>> ', loginUserInfoData);
 
@@ -286,7 +286,7 @@ const Workspace: FC<Props> = () => {
 				});*/
 			onCreateWorkspaceMutation.mutate({ workspace: newWorkspace, url: newUrl });
 		},
-		[newWorkspace, newUrl]
+		[onCreateWorkspaceMutation, newWorkspace, newUrl]
 	);
 
 	const onCloseModal = useCallback(() => {
@@ -368,10 +368,10 @@ const Workspace: FC<Props> = () => {
 					</MenuScroll>
 				</Channels>
 				<Chats>
-					{/*<Routes>
+					<Routes>
 						<Route path="channel/:channel" element={<Channel />} />
 						<Route path="dm/:id" element={<DirectMessage />} />
-					</Routes>*/}
+					</Routes>
 				</Chats>
 			</WorkspaceWrapper>
 			<Modal show={showCreateWorkspaceModal} onCloseModal={onCloseModal}>

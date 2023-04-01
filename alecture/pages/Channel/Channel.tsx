@@ -16,7 +16,8 @@ type channelType = {
 const Channel = () => {
 	const location = useLocation();
 	const [chat, onChangeChat, setChat] = useInput('');
-	const onSubmitForm = useCallback((e: any) => {
+	const onSubmitFormChannel = useCallback((e: any) => {
+		console.log('channel submit');
 		e.preventDefault();
 		setChat('');
 	}, []);
@@ -25,7 +26,7 @@ const Channel = () => {
 	return (
 		<Container>
 			<ChatList />
-			<ChatBox chat={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm} />
+			<ChatBox chat={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitFormChannel} />
 		</Container>
 	);
 	//const { email } = useLocation();
