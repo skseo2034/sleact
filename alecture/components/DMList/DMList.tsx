@@ -6,6 +6,7 @@ import { IUser, IUserWithOnline } from '@typings/db';
 import { fetcher } from '@utils/fetcher';
 import useSWR from 'swr';
 import { useQuery } from 'react-query';
+import useSocket from '@hooks/useSocket';
 
 const reqUserInfoUrl = '/api/users';
 
@@ -62,14 +63,27 @@ const DMList = () => {
 	const toggleChannelCollapse = useCallback(() => {
 		setChannelCollapse(prev => !prev);
 	}, []);
-	// const [socket, disconnect] = useSocket(workspace);
-	const [onlineList, setOnlineList] = useState<number[]>([]);
 
-	/*useEffect(() => {
+	const [socket, disconnect] = useSocket(workspace);
+	const [onlineList, setOnlineList] = useState<number[]>([]);
+	const [counList, setCounList] = useState({});
+
+	useEffect(() => {
+		console.log('DMList: workspace 바귀었다', workspace);
+		setOnlineList([]);
+		setCounList({});
+	}, [workspace]);
+
+	useEffect(() => {
 		socket?.on('onlineList', (data: number[]) => {
 			setOnlineList(data);
 		});
-	}, [socket]);*/
+		// onsole.log('socket on dm', socket?.hasListeners('dm'), socket);
+		return () => {
+			// console.log('socket off dm', socket?.hasListeners('dm'));
+			socket?.off('onlineList');
+		};
+	}, [socket]);
 
 	return (
 		<div>

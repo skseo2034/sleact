@@ -36,6 +36,7 @@ import InviteChannelModalModal from '@components/InviteChannelModal/InviteChanne
 import ChannelList from '@components/ChannelList/ChannelList';
 import DMList from '@components/DMList/DMList';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
+import useSocket from '@hooks/useSocket';
 const Channel = loadable(() => import('@pages/Channel/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage/DirectMessage'));
 
@@ -53,23 +54,8 @@ const Workspace: FC<Props> = () => {
 	const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
 	const [showInviteWorkspaceModal, setShowInviteWorkspaceModal] = useState(false);
 	const [showInviteChannelModal, setShowInviteChannelModal] = useState(false);
-
 	const { workspace } = useParams<string>();
-	// console.log('workspace', workspace);
-	const navigate = useNavigate();
-	// const API_URL = process.env.REACT_APP_API_URL;
-	// const PORT = process.env.REACT_APP_PORT; // 3095
-	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
-	const reqUserInfoUrl = '/api/users';
-	const reqLogoutUrl = '/api/users/logout';
-
-	/*const {
-		data: userData,
-		error,
-		mutate,
-	} = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
-		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
-	});*/
+	const [socket, disconnect] = useSocket(workspace);
 
 	const {
 		isLoading,
@@ -90,22 +76,6 @@ const Workspace: FC<Props> = () => {
 		},
 	});
 
-	if (isLoading) {
-		console.log('LOADING');
-		//return "Loading...";
-	}
-
-	if (isError) {
-		console.log('error', error.message);
-		//return "An error has occurred: " + error;
-	}
-
-	console.log('data', loginUserInfoData);
-	/*const { data: channelData } = useSWR<IChannel[]>(
-		loginUserInfoData ? `/api/workspaces/${workspace}/channels` : null,
-		fetcher
-	);*/
-	const getChannelsUrl = `/api/workspaces/${workspace}/channels`;
 	const { data: channelData } = useQuery('channelData', () => fetcher({ fetchUrl: getChannelsUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
@@ -120,6 +90,41 @@ const Workspace: FC<Props> = () => {
 			console.log('workspace getChannels Error', e.message);
 		},
 	});
+
+	useEffect(() => {
+		if (channelData && loginUserInfoData && socket) {
+			socket.emit('login', { id: loginUserInfoData.id, channles: channelData.map((v: IChannel) => v.id) });
+		}
+	}, [channelData, loginUserInfoData, socket]);
+
+	useEffect(() => {
+		return () => {
+			disconnect();
+		};
+	}, [workspace, disconnect]);
+
+	// console.log('workspace', workspace);
+	const navigate = useNavigate();
+	// const API_URL = process.env.REACT_APP_API_URL;
+	// const PORT = process.env.REACT_APP_PORT; // 3095
+	// const reqUserInfoUrl = `${API_URL}:${PORT}/api/users`;
+	const reqUserInfoUrl = '/api/users';
+	const reqLogoutUrl = '/api/users/logout';
+
+	/*const {
+		data: userData,
+		error,
+		mutate,
+	} = useSWR<IUser | boolean>(reqUserInfoUrl, fetcher, {
+		dedupingInterval: 100000, // default 2000 즉 2초마다 서버에 요청을 보냄, 캐시의 유지기간. 즉 100초 안에 아무리 많은 요청을 보내도 캐시데이터를 사용한다.
+	});*/
+
+	console.log('data', loginUserInfoData);
+	/*const { data: channelData } = useSWR<IChannel[]>(
+		loginUserInfoData ? `/api/workspaces/${workspace}/channels` : null,
+		fetcher
+	);*/
+	const getChannelsUrl = `/api/workspaces/${workspace}/channels`;
 
 	//console.log('channelData', channelData);
 
@@ -307,6 +312,13 @@ const Workspace: FC<Props> = () => {
 	const onClickInviteWorkspace = useCallback(() => {
 		setShowInviteWorkspaceModal(true);
 	}, []);
+
+	if (isError) {
+		console.log('error', error.message);
+		alert('사용자 정보가 없습니다.');
+		navigate('/login');
+		//return "An error has occurred: " + error;
+	}
 
 	return (
 		<div>
