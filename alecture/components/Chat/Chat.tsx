@@ -1,6 +1,6 @@
 import { ChatWrapper } from '@components/Chat/chatStyles';
 import { IDM, IChat } from '@typings/db';
-import React, { useMemo, FC } from 'react';
+import React, { useMemo, FC, memo } from 'react';
 import gravatar from 'gravatar';
 import dayjs from 'dayjs';
 import regexifyString from 'regexify-string';
@@ -50,10 +50,10 @@ const Chat: FC<Props> = ({ data }) => {
 					<b>{user.nickname}</b>
 					<span>{dayjs(data.createdAt).format('h:mm A')}</span>
 				</div>
-				<p>{result}</p>
+				<p>{data.content}</p>
 			</div>
 		</ChatWrapper>
 	);
 };
 
-export default Chat;
+export default memo(Chat);
