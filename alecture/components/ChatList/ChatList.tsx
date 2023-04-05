@@ -1,15 +1,27 @@
-import React, { useMemo, useRef } from 'react';
-import { ChatZone, Section } from '@components/ChatList/chatListStyles';
+import React, { useMemo, useRef, forwardRef, FC, RefObject } from 'react';
+import { ChatZone, Section, StickyHeader } from '@components/ChatList/chatListStyles';
 import Scrollbars from 'react-custom-scrollbars-2';
 import Chat from '@components/Chat/Chat';
 import dayjs from 'dayjs';
 import regexifyString from 'regexify-string';
 import { Link } from 'react-router-dom';
+import { IChat, IDM } from '@typings/db';
 
-const ChatList = () => {
-	const scrollbarRef = useRef(null);
-	const onscroll = () => {
-		//.....
+interface Props {
+	scrollbarRef: RefObject<Scrollbars>;
+	isReachingEnd?: boolean;
+	isEmpty: boolean;
+	chatSections: { [key: string]: (IDM | IChat)[] };
+	/*setSize: (f: (size: number) => number) => Promise<(IDM | IChat)[][] | undefined>;*/
+}
+const ChatList: FC<Props> = ({ scrollbarRef, /*setSize,*/ isReachingEnd, isEmpty, chatSections }) => {
+	const onScroll = (values: any) => {
+		if (values.scrollTop === 0 && !isReachingEnd) {
+			console.log('가장 위');
+			/*setSize(prevSize => prevSize + 1).then(() => {
+				// 스크롤위치 유지
+			});*/
+		}
 	};
 
 	const data = {
@@ -56,7 +68,7 @@ const ChatList = () => {
 
 	return (
 		<ChatZone>
-			<Scrollbars autoHide ref={scrollbarRef} onScrollFrame={onscroll}>
+			<Scrollbars autoHide ref={scrollbarRef} onScrollFrame={onScroll}>
 				<Section>
 					section&nbsp;&nbsp;
 					<span>{dayjs('20230131235959').format('h:mm A')}</span>
@@ -103,6 +115,22 @@ const ChatList = () => {
 				<Section>section</Section>
 			</Scrollbars>
 		</ChatZone>
+		/*<ChatZone>
+			<Scrollbars autoHide ref={scrollbarRef} onScrollFrame={onScroll}>
+				{Object.entries(chatSections).map(([date, chats]) => {
+					return (
+						<Section className={`section-${date}`} key={date}>
+							<StickyHeader>
+								<button>{date}</button>
+							</StickyHeader>
+							{chats.map(chat => (
+								<Chat key={chat.id} data={chat} />
+							))}
+						</Section>
+					);
+				})}
+			</Scrollbars>
+		</ChatZone>*/
 	);
 };
 

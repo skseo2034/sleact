@@ -1,5 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
+
 import { IDM, IUser } from '@typings/db';
 import { fetcher, Swrfetcher } from '@utils/fetcher';
 import gravatar from 'gravatar';
@@ -10,13 +12,17 @@ import ChatList from '@components/ChatList/ChatList';
 import useInput from '@hooks/useInput';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from 'react-query';
 import axios, { AxiosError } from 'axios';
+import Scrollbars from 'react-custom-scrollbars-2';
+import makeSection from '@utils/makeSection';
 
+const PAGE_SIZE = 20;
 const DirectMessage = () => {
 	const { workspace, id } = useParams();
 	const queryClient = useQueryClient();
 	const [chat, onChangeChat, setChat] = useInput('');
 	const theOtherPartyInfoUrl = `/api/workspaces/${workspace}/users/${id}`;
 	const myInfoUrl = '/api/users';
+	const scrollbarRef = useRef<Scrollbars>(null);
 	/*const {
 		data: theOtherPartyUserData,
 		error,
@@ -112,7 +118,7 @@ const DirectMessage = () => {
 	/*const { data: chatData, mutate: mutateChat } = useSWR<IDM[]>(chatUrl, Swrfetcher);
 	console.log('DirectMessage', chatData);*/
 
-	const { data: chatData } = useQuery('pageChatData', () => fetcher({ fetchUrl: chatUrl }), {
+	/*const { data: chatData } = useQuery('pageChatData', () => fetcher({ fetchUrl: chatUrl }), {
 		refetchOnWindowFocus: false, // react-query는 사용자가 사용하는 윈도우가 다른 곳을 갔다가 다시 화면으로 돌아오면 이 함수를 재실행합니다. 그 재실행 여부 옵션 입니다.
 		retry: 0, // 실패시 재호출 몇번 할지
 		onSuccess: data => {
@@ -124,7 +130,7 @@ const DirectMessage = () => {
 			// 강제로 에러 발생시키려면 api단에서 throw Error 날립니다. (참조: https://react-query.tanstack.com/guides/query-functions#usage-with-fetch-and-other-clients-that-do-not-throw-by-default)
 			console.log(e.message);
 		},
-	});
+	});*/
 
 	/*const mutation = useMutation<IUser, AxiosError, { content: string }>(
 		'loginUserInfo',
@@ -147,6 +153,26 @@ const DirectMessage = () => {
 			},
 		}
 	);*/
+	const {
+		data: chatData,
+		mutate: mutateChat,
+		/*setSize,*/
+	} = useSWRInfinite<IDM[]>(
+		(index: number) => `/api/workspaces/${workspace}/dms/${id}/chats?perPage=${PAGE_SIZE}&page=${index + 1}`,
+		fetcher,
+		{
+			onSuccess(data) {
+				if (data?.length === 1) {
+					setTimeout(() => {
+						scrollbarRef.current?.scrollToBottom();
+					}, 100);
+				}
+			},
+		}
+	);
+	//
+	const isEmpty = chatData?.[0]?.length === 0;
+	const isReachingEnd = isEmpty || (chatData && chatData[chatData.length - 1]?.length < PAGE_SIZE);
 
 	const onSubmitFormDirectMessage = useCallback(
 		(e: any) => {
@@ -184,6 +210,8 @@ const DirectMessage = () => {
 		return null;
 	}
 
+	const chatSections = makeSection(chatData ? chatData.flat().reverse() : []);
+
 	return (
 		<Container>
 			<Header>
@@ -193,7 +221,13 @@ const DirectMessage = () => {
 				/>
 				<span>{theOtherPartyUserData.nickname}</span>
 			</Header>
-			<ChatList />
+			<ChatList
+				scrollbarRef={scrollbarRef}
+				/*setSize={setSize}*/
+				isEmpty={isEmpty}
+				isReachingEnd={isReachingEnd}
+				chatSections={chatSections}
+			/>
 			<ChatBox chat={chat} onSubmitForm={onSubmitFormDirectMessage} onChangeChat={onChangeChat} />
 		</Container>
 	);
