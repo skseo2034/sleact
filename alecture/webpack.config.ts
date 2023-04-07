@@ -3,6 +3,9 @@ import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 import webpack, { Configuration as WebpackConfiguration } from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 /*const Dotenv = require('dotenv-webpack');*/
 
@@ -19,9 +22,6 @@ dotenv.config({
 interface Configuration extends WebpackConfiguration {
 	devServer?: WebpackDevServerConfiguration;
 }
-
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 // console.log(process.env.NODE_ENV);
@@ -114,7 +114,7 @@ const config: Configuration = {
 if (isDevelopment && config.plugins) {
 	config.plugins.push(new webpack.HotModuleReplacementPlugin());
 	config.plugins.push(new ReactRefreshWebpackPlugin());
-	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: false }));
+	config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: true }));
 }
 if (!isDevelopment && config.plugins) {
 	config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: true }));

@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env DEV=ture webpack serve --env development",
     "dev1": "webpack serve --env development",
-    "dev2": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack serve --env development",
+    "original-dev": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" webpack serve --env development",
+    "original-build": "cross-env TS_NODE_PROJECT=\"tsconfig-for-webpack-config.json\" NODE_ENV=production webpack",
     "dev-build": "cross-env NODE_ENV=development webpack",
     "pro-build": "cross-env NODE_ENV=production webpack"
   },
